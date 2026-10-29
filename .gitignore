@@ -1,0 +1,12 @@
+# Personal team task notes — kept local, never pushed
+TEAM_TASKS.md
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
