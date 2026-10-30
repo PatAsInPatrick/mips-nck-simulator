@@ -36,6 +36,9 @@ allCMD=[
 # change allCMD to cmdDict
 cmdDict={'ADD': ('ADD', 'R', '000000', '100000'), 'ADDI': ('ADDI', 'I', '001000', '000000'), 'ADDIU': ('ADDIU', 'I', '001001', '000000'), 'ADDU': ('ADDU', 'R', '000000', '100001'), 'AND': ('AND', 'R', '000000', '100100'), 'ANDI': ('ANDI', 'I', '001100', '000000'), 'BEQ': ('BEQ', 'I', '000100', '000000'), 'BNE': ('BNE', 'I', '000101', '000000'), 'J': ('J', 'J', '000010', '000000'), 'JAL': ('JAL', 'J', '000011', '000000'), 'JR': ('JR', 'R', '000000', '001000'), 'LBU': ('LBU', 'I', '100100', '000000'), 'LHU': ('LHU', 'I', '100101', '000000'), 'LL': ('LL', 'I', '110000', '000000'), 'LUI': ('LUI', 'I', '001111', '000000'), 'LW': ('LW', 'I', '100011', '000000'), 'NOR': ('NOR', 'R', '000000', '100111'), 'OR': ('OR', 'R', '000000', '100101'), 'ORI': ('ORI', 'I', '001101', '000000'), 'SLT': ('SLT', 'R', '000000', '101010'), 'SLTI': ('SLTI', 'I', '001010', '000000'), 'SLTIU': ('SLTIU', 'I', '001011', '000000'), 'SLTU': ('SLTU', 'R', '000000', '101011'), 'SLL': ('SLL', 'R', '000000', '000000'), 'SRL': ('SRL', 'R', '000000', '000010'), 'SB': ('SB', 'I', '101000', '000000'), 'SC': ('SC', 'I', '111000', '000000'), 'SH': ('SH', 'I', '101001', '000000'), 'SW': ('SW', 'I', '101011', '000000'), 'SUB': ('SUB', 'R', '000000', '100010'), 'SUBU': ('SUBU', 'R', '000000', '100011')}
 
+# SYSCALL is R-type: opcode 000000, funct 001100
+cmdDict['SYSCALL'] = ('SYSCALL', 'R', '000000', '001100')
+
 def imm2int(imm):
     """
     convert immediate in either hex or dec string to int
@@ -113,7 +116,7 @@ class Instruction:
                 self.prepareTypeR()
             case 'JR':
                 #print("Preparing R JR cmnd")
-                pass
+                self.operands[0] = int(self.operands[0][1:]) # register holding the return address
             case 'SLL' | 'SRL' :
                 #print("Preparing R Shift cmnd")
                 pass
@@ -130,8 +133,8 @@ class Instruction:
             case 'J' | 'JAL' :
                 #print("Preparing J format")
                 self.prepareTypeAddr()
-            case 'HALT' :
-                pass #print("HALT cmnd")
+            case 'HALT' | 'SYSCALL' :
+                pass #no operands
             case '.ORG' :
                 self.prepareTypeAddr()
                 pass #change PC
@@ -157,6 +160,10 @@ class Instruction:
                 if imm < 0:
                     imm = (2**16 + imm) # convert to 2 implement
                 word += reg2bin5(rs) + reg2bin5(rt) + ('0'*15 + bin(imm)[2:])[-16:]
+            elif self.opcode == 'JR':       # opcode rs(5) 0(15) funct
+                word += reg2bin5(opr[0]) + '0'*15 + (cmdDict[self.opcode])[3]
+            elif self.opcode == 'SYSCALL':  # opcode 0(20) funct
+                word += '0'*20 + (cmdDict[self.opcode])[3]
             elif self.opcode in ['J', 'JAL']:
                 addr = opr[0] >> 2
                 word += ('0'*25 + bin(addr)[2:])[-26:]

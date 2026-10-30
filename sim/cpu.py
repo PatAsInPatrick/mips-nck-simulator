@@ -6,17 +6,21 @@ from isa import Instruction
 DISP_FORMAT = "HEX" # INT or HEX form
 
 class CPU:
-    def __init__(self, instructions, memory):
+    def __init__(self, instructions, memory, quiet=False):
         """
         instructions: list of instruction strings
         memory: Memory object
+        quiet: True = print only SYSCALL output (no listing, no register/memory dump)
         """
 
         self.PC = 0
         self.BASE_PC = self.PC
-        self.registers = [0] * 32 
+        self.registers = [0] * 32
+        self.registers[29] = 0x7FFFEFFC  # $sp starts at the same address as QtSpim/MARS
         self.memory = memory
         self.running = True
+        self.quiet = quiet
+        self.input_buffer = []  # numbers typed but not read yet by SYSCALL 5
 
         # Parse instructions into Instruction objects
         #   decode(); docode2(); decode3()
@@ -34,14 +38,16 @@ class CPU:
         for instrctn in self.instructions:
             # put hexcmd in to memory
             strPC = ('0'*7+hex(textpos)[2:])[-8:]
-            print(strPC, instrctn.hexcmd, instrctn.raw, end='\t')
+            if not self.quiet:
+                print(strPC, instrctn.hexcmd, instrctn.raw, end='\t')
             if instrctn.hexcmd != None:
                 for i in range(4):
                     #print(int(instrctn.hexcmd[i*2:i*2+2],16), end=" ")
                     val = int(instrctn.hexcmd[i*2:i*2+2],16)
                     self.memory.write(textpos, val)
                     textpos += 1
-            print()
+            if not self.quiet:
+                print()
 
 
     def fetch(self):
@@ -87,20 +93,22 @@ class CPU:
             
             if instr is None:
                 break
-            print(f"Executed: {self.pc2hex()} {instr.raw}")
+            if not self.quiet:
+                print(f"Executed: {self.pc2hex()} {instr.raw}")
             self.execute(instr)
-            
+
 
             # Debug output uncomment below
-            if instr.opcode != '.ORG':
+            if instr.opcode != '.ORG' and not self.quiet:
                 self.debug()
                 pass
 
             self.validate()
             self.PC += 1
         #Show register after finish
-        print("Last STATE")
-        self.debug()
+        if not self.quiet:
+            print("Last STATE")
+            self.debug()
 
     def debug(self):
         """
@@ -194,7 +202,7 @@ class CPU:
             # Compare registers and update PC if equal 
             if self.registers[rs] == self.registers[rt]:
                 self.PC += offset
-                print(f"BEQ check: R{rs}={self.registers[rs]} R{rt}={self.registers[rt]}")
+                if not self.quiet: print(f"BEQ check: R{rs}={self.registers[rs]} R{rt}={self.registers[rt]}")
 
         # BNE rs, rt, offset
         # If the values in registers rs and rt are not equal,
@@ -205,13 +213,45 @@ class CPU:
             # Compare registers and update PC if equal 
             if self.registers[rs] != self.registers[rt]:
                 self.PC += offset
-                print(f"BNE check: R{rs}={self.registers[rs]} R{rt}={self.registers[rt]}")
+                if not self.quiet: print(f"BNE check: R{rs}={self.registers[rs]} R{rt}={self.registers[rt]}")
 
         # J address
         # branch to specific address by modifying the PC  
         elif opcode == "J":
             target = ops[0]//4
             self.PC = target - 1 #step back 1 instruction since +1 in the loop run
+
+        # JAL address
+        # save return address (byte address of the next instruction) in $31, then jump like J
+        elif opcode == "JAL":
+            self.registers[31] = (self.PC + 1) * 4
+            target = ops[0]//4
+            self.PC = target - 1 #step back 1 instruction since +1 in the loop run
+
+        # JR rs
+        # jump to the byte address stored in register rs (return from function with JR $31)
+        elif opcode == "JR":
+            rs = ops[0]
+            self.PC = self.registers[rs]//4 - 1 #step back 1 instruction since +1 in the loop run
+
+        # SYSCALL
+        # service number in $2:  1 = print $4,  5 = read int into $2,  10 = exit
+        elif opcode == "SYSCALL":
+            service = self.registers[2]
+            if service == 1:
+                val = self.registers[4] & 0xffffffff
+                if val >= 2**31: val -= 2**32   # show as signed 32-bit
+                print(val)
+            elif service == 5:
+                while not self.input_buffer:    # numbers may be on one line ("5 2") or one per line
+                    self.input_buffer = input().split()
+                self.registers[2] = int(self.input_buffer.pop(0))
+            elif service == 10:
+                self.running = False
+            else:
+                print(f"error unknown SYSCALL service {service}")
+                self.running = False
+
         # HALT
         # Stops CPU execution
         elif opcode  == "HALT":
