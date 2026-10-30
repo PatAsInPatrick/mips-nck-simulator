@@ -15,15 +15,19 @@ def load_instructions(filename):
 
 def main():
     # Load instruction from file 
-    # Usage: python main.py [program.asm]   (default: instructions.txt)
-    filename = sys.argv[1] if len(sys.argv) > 1 else "instructions.txt"
+    # Usage: python main.py [-q] [program.asm]   (default: instructions.txt)
+    #   -q  quiet mode: print only SYSCALL output
+    args = sys.argv[1:]
+    quiet = "-q" in args
+    files = [a for a in args if a != "-q"]
+    filename = files[0] if files else "instructions.txt"
     instructions = load_instructions(filename)
 
     #create memory
     memory = Memory()
 
     #create CPU
-    cpu = CPU(instructions, memory)
+    cpu = CPU(instructions, memory, quiet=quiet)
 
     #run the CPU
     cpu.run()
