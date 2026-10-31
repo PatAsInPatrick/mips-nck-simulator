@@ -1,0 +1,83 @@
+.ORG 0
+ORI $2 $0 5
+SYSCALL
+ADD $20 $2 $0
+ORI $2 $0 5
+SYSCALL
+ADD $21 $2 $0
+ORI $9 $0 1
+SLT $8 $20 $9
+BNE $8 $0 12
+ORI $9 $0 26
+SLT $8 $9 $20
+BNE $8 $0 9
+SLT $8 $21 $0
+BNE $8 $0 7
+SLT $8 $20 $21
+BNE $8 $0 5
+ADD $4 $20 $0
+ADD $5 $21 $0
+JAL 108
+ADD $4 $2 $0
+BEQ $0 $0 1
+ADDI $4 $0 -1
+ORI $2 $0 1
+SYSCALL
+ORI $2 $0 10
+SYSCALL
+HALT
+ADDI $29 $29 -20
+SW $31 16($29)
+SW $16 12($29)
+SW $17 8($29)
+SW $18 4($29)
+SW $19 0($29)
+SUB $8 $4 $5
+SLT $9 $5 $8
+BEQ $9 $0 2
+ADD $16 $5 $0
+BEQ $0 $0 1
+ADD $16 $8 $0
+SUB $17 $4 $16
+ORI $19 $0 1
+ORI $18 $0 1
+SLT $9 $16 $18
+BNE $9 $0 9
+ADD $4 $19 $0
+ADD $5 $17 $18
+JAL 244
+ADD $4 $2 $0
+ADD $5 $18 $0
+JAL 268
+ADD $19 $2 $0
+ADDI $18 $18 1
+BEQ $0 $0 -11
+ADD $2 $19 $0
+LW $31 16($29)
+LW $16 12($29)
+LW $17 8($29)
+LW $18 4($29)
+LW $19 0($29)
+ADDI $29 $29 20
+JR $31
+ADD $2 $0 $0
+BEQ $5 $0 3
+ADD $2 $2 $4
+ADDI $5 $5 -1
+BNE $5 $0 -3
+JR $31
+ADD $2 $0 $0
+SLT $10 $4 $5
+BNE $10 $0 11
+ADD $8 $5 $0
+ORI $9 $0 1
+ADD $11 $8 $8
+SLT $10 $4 $11
+BNE $10 $0 3
+ADD $8 $11 $0
+ADD $9 $9 $9
+BEQ $0 $0 -6
+SUB $4 $4 $8
+ADD $2 $2 $9
+BEQ $0 $0 -13
+JR $31
