@@ -5,6 +5,11 @@ from isa import Instruction
 
 DISP_FORMAT = "HEX" # INT or HEX form
 
+def to_signed32(v):
+    """แปลงค่า (unsigned หรือ negative ก็ได้) ให้เป็น signed 32-bit"""
+    v &= 0xffffffff
+    return v - 2**32 if v >= 2**31 else v
+
 class CPU:
     def __init__(self, instructions, memory, quiet=False):
         """
@@ -72,11 +77,10 @@ class CPU:
             self.registers[0] = 0
             #return 1  # zero change
         for i  in range(32):
-            L = len(hex(self.registers[i]))
-            if L > 8+2:
+            if self.registers[i] > 0xffffffff:
                 print('"****************Warning: register', i, 'too large')
-                self.registers[i] = int(hex(self.registers[i])[-8:])
-            #return 2 # register too large
+            # keep every register as unsigned 32-bit (negative values wrap around)
+            self.registers[i] &= 0xffffffff
     
     def pc2hex(self):
         strpc = ('0'*7+hex(self.PC*4)[2:])[-8:]
@@ -141,6 +145,36 @@ class CPU:
         if opcode == "ADD":
             rd,rs,rt = ops[0], ops[1], ops[2]
             self.registers[rd] = self.registers[rs] + self.registers[rt]
+
+                    # ADDU rd, rs, rt       # เหมือน ADD แต่ wrap เป็น 32 bit
+        elif opcode == "ADDU":
+            rd,rs,rt = ops[0], ops[1], ops[2]
+            self.registers[rd] = (self.registers[rs] + self.registers[rt]) & 0xffffffff
+
+        # SUB rd, rs, rt        # rd = rs - rt
+        elif opcode == "SUB":
+            rd,rs,rt = ops[0], ops[1], ops[2]
+            self.registers[rd] = (self.registers[rs] - self.registers[rt]) & 0xffffffff
+
+        # SUBU rd, rs, rt       # rd = rs - rt (ใน simulator นี้ wrap เหมือน SUB)
+        elif opcode == "SUBU":
+            rd,rs,rt = ops[0], ops[1], ops[2]
+            self.registers[rd] = (self.registers[rs] - self.registers[rt]) & 0xffffffff
+
+        # AND rd, rs, rt        # rd = rs & rt
+        elif opcode == "AND":
+            rd,rs,rt = ops[0], ops[1], ops[2]
+            self.registers[rd] = (self.registers[rs] & self.registers[rt]) & 0xffffffff
+
+        # OR rd, rs, rt         # rd = rs | rt
+        elif opcode == "OR":
+            rd,rs,rt = ops[0], ops[1], ops[2]
+            self.registers[rd] = (self.registers[rs] | self.registers[rt]) & 0xffffffff
+
+        # SLT rd, rs, rt        # rd = (rs < rt) ? 1 : 0  เทียบแบบ signed 32-bit
+        elif opcode == "SLT":
+            rd,rs,rt = ops[0], ops[1], ops[2]
+            self.registers[rd] = 1 if to_signed32(self.registers[rs]) < to_signed32(self.registers[rt]) else 0
 
         # ADDI rt, rs, immediate # Adds an immediate value to the value in register rs and store the result in rt 
         elif opcode == "ADDI":
