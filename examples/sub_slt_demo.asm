@@ -1,0 +1,19 @@
+.ORG 0
+ORI $1 $0 10
+ORI $2 $0 3
+SUB $3 $1 $2
+SUB $4 $2 $1
+SLT $5 $2 $1
+SLT $6 $1 $2
+SLT $7 $4 $2
+ORI $8 $0 12
+ORI $9 $0 10
+AND $10 $8 $9
+OR $11 $8 $9
+ADDU $12 $1 $2
+SUBU $13 $2 $1
+LUI $14 0x7fff
+ORI $14 $14 0xffff
+ADDU $15 $14 $1
+SLT $16 $15 $0
+HALT

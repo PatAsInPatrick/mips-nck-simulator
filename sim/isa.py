@@ -160,6 +160,10 @@ class Instruction:
                 if imm < 0:
                     imm = (2**16 + imm) # convert to 2 implement
                 word += reg2bin5(rs) + reg2bin5(rt) + ('0'*15 + bin(imm)[2:])[-16:]
+            elif self.opcode in ['ADD', 'ADDU', 'AND', 'NOR', 'OR', 'SLT', 'SLTU', 'SUB', 'SUBU']:
+                # R-type: opcode(6) rs(5) rt(5) rd(5) shamt(5) funct(6)
+                rd, rs, rt = opr[0], opr[1], opr[2]      # operands are stored as [rd, rs, rt]
+                word += reg2bin5(rs) + reg2bin5(rt) + reg2bin5(rd) + '00000' + (cmdDict[self.opcode])[3]
             elif self.opcode == 'JR':       # opcode rs(5) 0(15) funct
                 word += reg2bin5(opr[0]) + '0'*15 + (cmdDict[self.opcode])[3]
             elif self.opcode == 'SYSCALL':  # opcode 0(20) funct
