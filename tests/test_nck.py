@@ -7,8 +7,8 @@ from pathlib import Path
 
 
 # Switch the command here when nck.asm and the simulator are ready.
-COMMAND = [sys.executable, "programs/nck_reference.py"]
-# COMMAND = [sys.executable, "sim/main.py", "-q", "programs/nck.asm"]
+# COMMAND = [sys.executable, "programs/nck_reference.py"]
+COMMAND = [sys.executable, "sim/main.py", "-q", "programs/nck.asm"]
 
 TIMEOUT_SECONDS = 5
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
