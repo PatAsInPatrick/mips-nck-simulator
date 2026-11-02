@@ -277,8 +277,6 @@ git commit -m "Update README"
 git push -u origin step4-docs
 ```
 
-- Have another teammate review the Pull Request before merging.
-- Keep changes focused and understandable.
 - Do not modify files in `reference/`.
 
 ---
