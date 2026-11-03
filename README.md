@@ -27,6 +27,7 @@ mips-nck-simulator/
 │   └── nck_reference.py        # Python reference program
 ├── tests/                      # Automated verification
 │   ├── test_nck.py             # Checks simulator output against math.comb()
+│   ├── list_cases.py           # Lists each valid case: expected vs. simulator output
 │   └── results.txt             # Recorded test results
 ├── examples/                   # Smaller examples to demonstrate simulator features
 │   ├── sum_10_to_1.asm         # Computes 10 + 9 + ... + 1 = 55
@@ -256,6 +257,27 @@ Failures (n, k, expected, got):
 ```
 
 The count of valid pairs is `sum(n + 1 for n in range(1, 27)) = 377`, **not 378**. These tests establish correct output for the tested nCk inputs; they are not a complete instruction-level CPU verification suite.
+
+#### Viewing individual cases (`tests/list_cases.py`)
+
+`test_nck.py` prints only the summary and any failures. To see every valid case on its own line, run:
+
+```bash
+python tests/list_cases.py        # all 377 valid pairs
+python tests/list_cases.py 10     # only n = 10
+```
+
+```text
+ 5  0  expected=1          got=1          OK
+ 5  1  expected=5          got=5          OK
+ 5  2  expected=10         got=10         OK
+```
+
+To check a single input by hand, pipe it into the simulator:
+
+```bash
+echo 10 3 | python sim/main.py -q programs/nck.asm    # prints 120
+```
 
 ### Step 4 — Documentation and demo
 
