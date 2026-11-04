@@ -102,7 +102,7 @@ def main() -> int:
     total_tests = valid_total + len(INVALID_CASES) + 1
 
     lines = [
-        f"Command: {' '.join(COMMAND)}",
+        f"Command: {' '.join(COMMAND[1:])}",
         f"Timeout: {TIMEOUT_SECONDS} seconds per run",
         f"Valid pairs: {valid_passed}/{valid_total} passed",
         f"Invalid inputs: {invalid_passed}/{len(INVALID_CASES)} passed",
